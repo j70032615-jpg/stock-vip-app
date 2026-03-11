@@ -1,7 +1,7 @@
 import streamlit as st
 
 # 1. 頁面配置
-st.set_page_config(page_title="股票心法 VIP 系統", layout="wide")
+st.set_page_config(page_title="股票心法 VIP 系統", layout="wide", page_icon="📈")
 
 # 2. 狀態初始化
 if 'logged_in' not in st.session_state:
@@ -58,54 +58,65 @@ with m_col:
         if st.session_state['logged_in']:
             st.subheader(f"📍 當前位置：{curr}")
             
-            # --- 實作：九. 緊急下跌診斷清單 (終極保命符) ---
-            if "九." in curr:
-                st.error("⚠️ 緊急下跌狀況診斷清單（避免操作錯誤）")
-                st.warning("🚨 注意事項：開盤前盡量勿買，避免波動過大被洗出去。")
-                
-                with st.expander("🛠️ 【該不該加碼？】診斷"):
-                    c1 = st.checkbox("1. 1分或5分線是否『突破站上』200MA？")
-                    c2 = st.checkbox("2. 是否跌回『箱型起漲點』且未跌破？(最大風險消失)")
-                    if c1 or c2:
-                        st.success("✅ 訊號：可考慮小量加碼。但若跌破起漲點必須馬上全撤！")
-                
-                with st.expander("🏃 【該不該出場？】診斷"):
-                    e1 = st.checkbox("1. 今天是否為『期貨結算日』？(結算日可能持續下跌)")
-                    e2 = st.checkbox("2. 是否跌破『今日 15分線最大量 K 棒』最低點？")
-                    e3 = st.checkbox("3. 1小時線 60MA 是否被跌破？")
-                    e4 = st.checkbox("4. 周線 20MA 是否被跌破？")
-                    e5 = st.checkbox("5. 下午指數是否跌破 5分線 200MA？")
-                    if any([e1, e2, e3, e4, e5]):
-                        st.error("❌ 警告：符合出場條件，先走為妙！等待 1-5分 K 爆量上漲再說。")
+            # --- 一. 畫趨勢線 ---
+            if "一." in curr:
+                st.write("### 趨勢線 - 找方向與最低價位 (建議年線)")
+                st.write("1. **年線準則**：找歷來平均最高最低點，方向最準，易見爆量下影線。")
+                st.write("2. **1分線波動**：找50點左右波動做。K棒在 20MA 爆量上漲進場，跌破 5MA 出場。")
+                st.write("3. **空頭避開**：K 在 20MA 下方，站上又跌破為走跌，需等爆量站回 20MA。")
+                st.write("4. **最簡判斷**：持續站在 5 日線上為多頭，跌破為空頭。")
+                st.write("5. **層次**：先以 1 小時線畫趨勢，再用短線找精確進場點。")
 
-                with st.expander("🔄 【應變處理】心理建設"):
-                    st.write("● **假突破處理**：跌回馬上出；如回轉真突破再買回，虧損有限。")
-                    st.write("● **破底翻處理**：箱型破底賣掉後，翻漲回來要『趕快買回來』，否則少賺一個箱型。")
-                    st.write("● **波段守備**：下跌是否超過前一波箱型頭？回漲請畫上升趨勢線並盯緊 1H 20MA。")
-
-            # --- 實作：八. 精準支撐壓力 ---
-            elif "八." in curr:
-                p_type = st.selectbox("觀察形態：", ["V型/N型 (向上轉折)", "M頭/A頭 (向下轉折)"])
-                if "V" in p_type: st.success("支撐在 V 底；回測不破是進場點。")
-                else: st.error("壓力在 M 頂；突破失敗應了結波段。")
-
-            # --- 實作：其餘模組 (已完整整合) ---
-            elif "六." in curr:
-                st.write("裸 K 心法：低檔短 K 主力吃貨，爆量大 K 跌轉漲。")
-            elif "五." in curr:
-                st.write("懶人法：周線 20MA 多空線，月線 KDJ 20/80 策略。")
-            elif "四." in curr:
-                st.write("均線慣性：60MA 轉折線、200MA 長線守護、5MA 爆量點。")
+            # --- 二 & 三. 箱型邏輯 ---
             elif "二." in curr or "三." in curr:
-                hp = st.number_input("壓力", value=100.0)
-                lp = st.number_input("支撐", value=80.0)
-                st.metric("🚀 目標價", f"{hp + (hp-lp):.2f}")
-            elif "七." in curr:
-                total = st.number_input("總資產(萬)", value=100.0)
-                st.write(f"60% 高股息: {total*0.6:.1f} 萬")
+                hp = st.number_input("箱型最高 (壓力)", value=100.0)
+                lp = st.number_input("箱型最低 (支撐)", value=90.0)
+                diff = hp - lp
+                mid = lp + (diff / 2)
+                st.metric("🛡️ 中軸守備線", f"{mid:.2f}")
+                st.metric("🚀 第二波目標", f"{hp + diff:.2f}")
+                st.write("---")
+                st.write("1. **波段定義**：爆量下影線往上至整理區箭頭為一波，通常漲 2-3 波。")
+                st.write("2. **箱型加碼**：突破後可加碼，但需站穩 20MA。")
+                st.write("3. **波動對應**：15分線一波 400 點，下跌也可能對應 400 點。")
 
-            else:
-                st.info(f"「{curr}」內容已完整整合。")
+            # --- 四. 均線做法 ---
+            elif "四." in curr:
+                st.write("1. **60MA 轉折**：1小時跌破 60MA 先逃，漲回買回。")
+                st.write("2. **200MA 長線**：期貨5分線突破 200MA 做多，跌回賣。")
+                st.write("3. **1分線爆量**：5MA 下爆量跌破又漲回是起漲；5MA 上爆量突破又跌破是起跌。")
+
+            # --- 五 & 六. 懶人與裸K ---
+            elif "五." in curr:
+                st.write("懶人法：周線 20MA/60MA 守住為多頭；KDJ 月線 20 下金叉買進。")
+            elif "六." in curr:
+                st.write("裸 K：找底部吃貨短 K 盤整 + 爆量大 K 翻漲。")
+
+            # --- 七. 資金分配 ---
+            elif "七." in curr:
+                total = st.number_input("總資產 (萬元)", value=100.0)
+                st.write(f"💰 60% 高股息: {total*0.6:.1f} 萬")
+                st.write(f"💰 30% 波動型: {total*0.3:.1f} 萬")
+                st.write(f"💰 10% 短線個股: {total*0.1:.1f} 萬")
+                st.info("獲利 20% 出場 10% 資金；跌 20% 進場獲利資金。")
+
+            # --- 八. 精準支撐壓力 ---
+            elif "八." in curr:
+                st.write("1. 下跌趨勢起始頭部為壓力線 (1H 60MA 跌破後需等待壓力突破)。")
+                st.write("2. 上升趨勢起始底部為支撐線。")
+
+            # --- 九. 緊急下跌診斷 ---
+            elif "九." in curr:
+                st.error("⚠️ 緊急下跌狀況診斷清單 (保命符)")
+                with st.expander("🛠️ 【該不該加碼？】"):
+                    st.checkbox("1. 1分或5分線是否『突破站上』200MA？")
+                    st.checkbox("2. 是否跌回『箱型起漲點』且未跌破？")
+                with st.expander("🏃 【該不該出場？】"):
+                    st.checkbox("1. 今天是否為『期貨結算日』？")
+                    st.checkbox("2. 跌破『今日 15分線最大量 K 棒』最低點？")
+                    st.checkbox("3. 1小時線 60MA 或周線 20MA 跌破？")
+                st.info("假突破馬上出；破底翻趕快買回。開盤前勿追高。")
+
         else:
             st.warning("🔒 此為 VIP 專屬內容，請先登入 (1234)。")
 
