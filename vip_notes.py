@@ -2,10 +2,12 @@ import streamlit as st
 import pandas as pd
 
 # ==========================================
-# 核心設定區：請確認 SHEET_ID 是否正確
+# 核心設定區：請確認 SHEET_ID 與 SHEET_NAME 正確
 # ==========================================
+# 您的試算表 ID
 SHEET_ID = "1oWgZi4LPnYfwe22sG2MJOzZCj1LkUXysQ-pAG-3Pr98"
-SHEET_NAME = "VIP%E5%90%8D%E5%96%AE"  # 這是「VIP名單」的編碼
+# 這裡改回中文，最直覺也最不容易出錯
+SHEET_NAME = "VIP名單" 
 
 # 建立 Google Sheets CSV 讀取連結
 URL_USERS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={SHEET_NAME}"
@@ -19,7 +21,7 @@ if "logged_in" not in st.session_state:
 # --- 登入介面 ---
 if not st.session_state.logged_in:
     st.title("🔐 股票十大心法 VIP 系統")
-    st.info("請輸入您的 VIP 帳號密碼以解鎖核心心法內容。")
+    st.info("請輸入您的 VIP 帳號密碼以解鎖核心內容。")
     
     with st.form("login_form"):
         input_user = st.text_input("VIP 帳號")
@@ -37,7 +39,7 @@ if not st.session_state.logged_in:
                 input_p_str = str(input_pw).strip()
                 
                 for index, row in users_df.iterrows():
-                    # 取第一欄當帳號，第二欄當密碼
+                    # 抓第一欄與第二欄
                     db_u = str(row[0]).strip()
                     db_p = str(row[1]).strip()
                     
@@ -51,10 +53,9 @@ if not st.session_state.logged_in:
                     st.rerun()
                 else:
                     st.error("❌ 帳號或密碼錯誤，請重新輸入。")
-                    st.warning("提醒：請確認 Google 試算表的 A2、B2 格子已填入正確資料並「發布到網路」。")
             except Exception as e:
-                st.error(f"連線失敗：請確認試算表已「發布到網路」且分頁名稱為『VIP名單』")
-                st.info(f"偵測到的錯誤：{e}")
+                st.error(f"連線失敗：請確認試算表已「發布到網路」")
+                st.info(f"技術提醒：請檢查試算表分頁名稱是否為『{SHEET_NAME}』")
 
 # --- 核心心法內容區 ---
 else:
@@ -93,4 +94,5 @@ else:
         st.markdown("""
         * **60% 資金**：挑選 2 檔高股息 ETF (如 00919, 0056)。
         * **30% 資金**：挑選 1 檔波動型 ETF。
-        * **10%
+        * **10% 資金**：短線個股或緊急預備金。
+        * **獲利機制**
