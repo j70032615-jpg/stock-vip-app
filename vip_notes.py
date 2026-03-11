@@ -1,7 +1,7 @@
 import streamlit as st
 
 # 1. 基礎設定
-st.set_page_config(page_title="股票心法 VIP 系統", layout="wide", page_icon="📈")
+st.set_page_config(page_title="股票心法 VIP 系統", layout="wide")
 
 # 2. 狀態初始化
 if 'logged_in' not in st.session_state:
@@ -16,7 +16,8 @@ with st.sidebar:
         u = st.text_input("帳號")
         p = st.text_input("密碼", type="password")
         if st.button("確認進入系統", use_container_width=True):
-            if u == "admin" and p == "888888":
+            # 這裡幫你改好了，帳號 1234，密碼 1234
+            if u == "1234" and p == "1234":
                 st.session_state['logged_in'] = True
                 st.rerun()
             else:
@@ -49,10 +50,11 @@ with m_col:
     curr = st.session_state['tab']
     if curr != "主目錄":
         if st.session_state['logged_in']:
-            st.subheader(f"📍 {curr}")
+            st.subheader(f"📍 當前位置：{curr}")
             
-            # 實作：箱型計算 (二、三)
+            # 功能實作：箱型計算 (二、三)
             if "箱型" in curr:
+                st.markdown("### 🎯 專業箱型目標價預測")
                 c1, c2 = st.columns(2)
                 hp = c1.number_input("箱型最高 (壓力)", value=100.0)
                 lp = c2.number_input("箱型最低 (支撐)", value=80.0)
@@ -60,16 +62,19 @@ with m_col:
                 mid_p = lp + (box_h / 2)
                 st.metric("🛡️ 中軸守備線", f"{mid_p:.2f}")
                 st.metric("🚀 第二波目標", f"{hp + box_h:.2f}")
-                st.info(f"建議在 {mid_p} 以下尋找爆量起漲點。")
+                st.info(f"💡 建議在 {mid_p} 以下尋找爆量起漲點，突破 {hp} 為加碼點。")
 
-            # 實作：資金分配 (七)
+            # 功能實作：資金分配 (七)
             elif "資金" in curr:
-                total = st.number_input("總資產 (萬元)", value=100.0)
-                st.write(f"💰 60% 高股息: {total*0.6:.1f} 萬")
-                st.write(f"💰 30% 波動型: {total*0.3:.1f} 萬")
-                st.write(f"💰 10% 短線個股: {total*0.1:.1f} 萬")
+                st.markdown("### 💰 6-3-1 資金比例管理")
+                total = st.number_input("總可用資產 (萬元)", value=100.0, step=10.0)
+                st.divider()
+                st.write(f"📊 **60% 高股息 ETF:** {total*0.6:.1f} 萬")
+                st.write(f"📊 **30% 波動型 ETF:** {total*0.3:.1f} 萬")
+                st.write(f"📊 **10% 短線個股:** {total*0.1:.1f} 萬")
+                st.success(f"建議短線個股每檔分配：{(total*0.1)/5:.2f} 萬 (以5檔計)")
             
             else:
-                st.info("內容建置中...")
+                st.info(f"「{curr}」的心法細節與數位工具建置中...")
         else:
-            st.warning("🔒 此為 VIP 專屬工具，請先登入。")
+            st.warning("🔒 此功能內含核心公式，請先從左側登入 VIP 帳號。")
