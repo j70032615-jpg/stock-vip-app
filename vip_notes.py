@@ -1,70 +1,68 @@
 import streamlit as st
 import pandas as pd
+import requests
+from io import StringIO
 
-# 1. 設定你的 Google 試算表發布網址 (CSV 格式)
+# 1. 基礎設定 - 請再次確認 SHEET_ID
+# 根據你的圖片，你的 SHEET_ID 應該是：1oWgZi4LPnYfwe22sG2MJOzZCj1LkUXysQ-pAG-3Pr98
 SHEET_ID = "1oWgZi4LPnYfwe22sG2MJOzZCj1LkUXysQ-pAG-3Pr98"
-URL_USERS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid=1834495482"
+# 這是你「VIP名單」分頁的 ID，從你第一張圖看是 1834495482
+GID = "1834495482" 
 
-st.set_page_config(page_title="股票心法 VIP 筆記本", layout="wide")
+# 重新構建一個更穩定的下載網址
+URL_CSV = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={GID}"
 
-# 初始化登入狀態
+st.set_page_config(page_title="股票心法 VIP 系統", layout="wide")
+
 if "vip_auth" not in st.session_state:
     st.session_state.vip_auth = False
 
 # --- 登入畫面 ---
 if not st.session_state.vip_auth:
     st.title("📈 股票心法 VIP 專屬系統")
-    st.subheader("請登入以查看專業筆記圖片")
     
     with st.container(border=True):
-        user = st.text_input("會員帳號")
-        pw = st.text_input("會員密碼", type="password")
+        user_input = st.text_input("會員帳號")
+        pw_input = st.text_input("會員密碼", type="password")
         
         if st.button("立即進入系統", use_container_width=True):
             try:
-                # 讀取資料並清除所有空白
-                df = pd.read_csv(URL_USERS).astype(str)
-                df.columns = [c.strip() for c in df.columns]
+                # 使用 requests 抓取，這比直接用 pd.read_csv 更穩定，能避開很多網路限制
+                response = requests.get(URL_CSV)
+                response.encoding = 'utf-8'
                 
-                # 專業比對邏輯：只要有一組帳密對上就過
-                match = False
-                for _, row in df.iterrows():
-                    if user.strip() == row[0].strip() and pw.strip() == row[1].strip():
-                        match = True
-                        break
-                
-                if match:
-                    st.session_state.vip_auth = True
-                    st.rerun()
+                if response.status_code == 200:
+                    df = pd.read_csv(StringIO(response.text)).astype(str)
+                    
+                    # 這裡會自動過濾掉空格
+                    match = False
+                    for _, row in df.iterrows():
+                        # 比對第一欄(帳號)與第二欄(密碼)
+                        if str(user_input).strip() == str(row[0]).strip() and \
+                           str(pw_input).strip() == str(row[1]).strip():
+                            match = True
+                            break
+                    
+                    if match:
+                        st.session_state.vip_auth = True
+                        st.success("✅ 登入成功！")
+                        st.rerun()
+                    else:
+                        st.error("❌ 帳號或密碼錯誤（請檢查試算表 A2, B2）")
                 else:
-                    st.error("❌ 帳號或密碼錯誤，請聯繫管理員")
-            except:
-                st.error("⚠️ 讀取名單失敗！請檢查試算表是否已『發布到網路』")
+                    st.error(f"⚠️ 抓取失敗，錯誤代碼: {response.status_code}。請檢查『發布到網路』是否勾選了全份文件。")
+            
+            except Exception as e:
+                st.error(f"⚠️ 系統連線異常: {e}")
+                st.info("💡 工程師提示：請確認您的 Google 試算表權限為『知道連結的所有人皆可檢視』")
 
-# --- VIP 內容區 ---
+# --- 登入後的內容 ---
 else:
-    st.sidebar.title("VIP 導航選單")
-    page = st.sidebar.radio("心法分類", ["📊 核心趨勢筆記", "🕯️ K線型態圖解", "💰 資金分配策略"])
-    
-    if st.sidebar.button("登出系統"):
+    st.sidebar.success("VIP 權限已啟動")
+    if st.sidebar.button("登出"):
         st.session_state.vip_auth = False
         st.rerun()
-
-    st.title(f"【{page}】")
-
-    if page == "📊 核心趨勢筆記":
-        st.info("這是我親手畫的趨勢線重點，請仔細研讀：")
-        # 這裡放入你的筆記圖片網址
-        # st.image("你的圖片網址.jpg", caption="心法一：畫線技巧")
-        st.markdown("""
-        ### 今日重點：
-        - 畫出爆量 K 棒低點。
-        - 觀察 20MA 是否有支撐。
-        """)
         
-    elif page == "🕯️ K線型態圖解":
-        st.warning("VIP 限定：爆量下影線的秘密")
-        # 示範顯示圖片的功能
-        # st.image("你的另一張筆記.jpg")
-
-    st.success("✅ 更多心法圖片將定期更新於此。")
+    st.title("🚀 歡迎回來，VIP 會員")
+    st.write("這裡可以開始放入你的教學筆記圖片或文字內容。")
+    # 範例：st.image("你的圖片網址")
