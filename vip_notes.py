@@ -1,67 +1,96 @@
 import streamlit as st
 import pandas as pd
 
-# 1. 基礎設定：這是您的試算表身分證，絕對不能少
+# ==========================================
+# 核心設定區：請確認 SHEET_ID 是否正確
+# ==========================================
 SHEET_ID = "1oWgZi4LPnYfwe22sG2MJOzZCj1LkUXysQ-pAG-3Pr98"
+SHEET_NAME = "VIP%E5%90%8D%E5%96%AE"  # 這是「VIP名單」的編碼
 
-# 2. 定位分頁：一個抓心法(gid=926157347)，一個抓VIP名單(用分頁名稱)
-URL_CONTENT = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid=926157347"
-URL_USERS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=VIP名單"
+# 建立 Google Sheets CSV 讀取連結
+URL_USERS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={SHEET_NAME}"
 
-def run_pro_app():
-    st.set_page_config(page_title="股票十大心法 VIP 系統", layout="wide")
+st.set_page_config(page_title="股票十大心法 VIP 系統", layout="wide")
+
+# 初始化登入狀態
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+# --- 登入介面 ---
+if not st.session_state.logged_in:
+    st.title("🔐 股票十大心法 VIP 系統")
+    st.info("請輸入您的 VIP 帳號密碼以解鎖核心心法內容。")
     
-    # --- 側邊欄：登入系統 ---
-    st.sidebar.title("🔐 會員登入")
-    input_user = st.sidebar.text_input("輸入帳號")
-    input_pw = st.sidebar.text_input("輸入密碼", type="password")
-    
-    is_vip = False
-    
-    if input_user and input_pw:
-        try:
-            # 讀取雲端 VIP 名單
-            users_df = pd.read_csv(URL_USERS)
-            users_df.columns = users_df.columns.astype(str).str.strip()
-            
-            # 比對帳號與密碼 (比對 A 欄與 B 欄)
-            match = users_df[(users_df.iloc[:, 0].astype(str) == input_user) & 
-                             (users_df.iloc[:, 1].astype(str) == input_pw)]
-            
-            if not match.empty:
-                is_vip = True
-                st.sidebar.success(f"✅ 歡迎回來！")
-            else:
-                st.sidebar.error("❌ 帳號或密碼錯誤")
-        except:
-            st.sidebar.warning("請確認『VIP名單』分頁已正確發布且名稱無誤。")
-
-    # --- 主畫面：顯示內容 ---
-    st.title("🛡️ 股票十大心法 VIP 系統")
-    st.write("---")
-
-    try:
-        # 讀取心法內容，header=None 確保第一項「一.」不消失
-        df = pd.read_csv(URL_CONTENT, header=None)
+    with st.form("login_form"):
+        input_user = st.text_input("VIP 帳號")
+        input_pw = st.text_input("登入密碼", type="password")
+        submit_button = st.form_submit_button("登入系統")
         
-        if not df.empty:
-            for i in range(len(df)):
-                title = str(df.iloc[i, 0]).strip()
-                if title == "nan" or not title: continue
+        if submit_button:
+            try:
+                # 讀取雲端資料
+                users_df = pd.read_csv(URL_USERS)
                 
-                with st.expander(f"📌 {title}"):
-                    if is_vip:
-                        # 解鎖 B 欄內容與 C 欄圖片
-                        st.write(df.iloc[i, 1])
-                        img_url = df.iloc[i, 2] if df.shape[1] > 2 else None
-                        if isinstance(img_url, str) and img_url.startswith("http"):
-                            st.image(img_url, use_container_width=True)
-                    else:
-                        st.warning("🔒 此為 VIP 專屬內容，請登入查看。")
-        else:
-            st.info("目前尚無心法數據。")
-    except Exception as e:
-        st.error(f"連線異常，請確認分頁名稱是否為『心法目錄』。")
+                # 究極防呆比對邏輯
+                is_vip = False
+                input_u_str = str(input_user).strip()
+                input_p_str = str(input_pw).strip()
+                
+                for index, row in users_df.iterrows():
+                    # 取第一欄當帳號，第二欄當密碼
+                    db_u = str(row[0]).strip()
+                    db_p = str(row[1]).strip()
+                    
+                    if input_u_str == db_u and input_p_str == db_p:
+                        is_vip = True
+                        break
+                
+                if is_vip:
+                    st.session_state.logged_in = True
+                    st.success("驗證成功！正在解鎖心法...")
+                    st.rerun()
+                else:
+                    st.error("❌ 帳號或密碼錯誤，請重新輸入。")
+                    st.warning("提醒：請確認 Google 試算表的 A2、B2 格子已填入正確資料並「發布到網路」。")
+            except Exception as e:
+                st.error(f"連線失敗：請確認試算表已「發布到網路」且分頁名稱為『VIP名單』")
+                st.info(f"偵測到的錯誤：{e}")
 
-if __name__ == "__main__":
-    run_pro_app()
+# --- 核心心法內容區 ---
+else:
+    st.sidebar.success("✅ VIP 已登入")
+    if st.sidebar.button("登出系統"):
+        st.session_state.logged_in = False
+        st.rerun()
+
+    st.title("📈 股票十大心法核心內容")
+    
+    tab1, tab2, tab3 = st.tabs(["核心心法", "緊急狀況處理", "資金分配"])
+
+    with tab1:
+        st.header("一. 畫趨勢線與心法操作順序")
+        st.markdown("""
+        1. **畫趨勢線**：建議直接用年線去畫，找到大方向跟最低價位。
+        2. **爆量位置**：容易看到爆量下影線的位置。
+        3. **進場準則**：K棒在 20MA 爆量上漲進場。
+        4. **出場準則**：K棒爆量跌破 5MA 出場。
+        5. **箱型確認**：1小時線 20日線突破或跌破需畫箱型確認。
+        """)
+
+    with tab2:
+        st.header("二. 緊急下跌狀況提醒")
+        st.warning("⚠️ 避免操作錯誤的檢查清單：")
+        st.markdown("""
+        1. **加碼判斷**：看 1分或5分線的 200MA 是否站上突破。
+        2. **結算日風險**：期貨結算日機率性持續下跌。
+        3. **量能監控**：看量是否放大且跌破最低點。
+        4. **早盤守線**：15分線早盤最大量 K 棒不可跌破。
+        5. **中期轉折**：1小時線 60MA 跌破先出場。
+        """)
+
+    with tab3:
+        st.header("三. 資金分配策略")
+        st.markdown("""
+        * **60% 資金**：挑選 2 檔高股息 ETF (如 00919, 0056)。
+        * **30% 資金**：挑選 1 檔波動型 ETF。
+        * **10%
