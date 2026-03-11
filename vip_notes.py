@@ -3,13 +3,13 @@ import streamlit as st
 # 1. 頁面配置
 st.set_page_config(page_title="股票心法 VIP 系統", layout="wide")
 
-# 2. 初始化 Session 狀態
+# 2. 狀態初始化
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 if 'tab' not in st.session_state:
     st.session_state['tab'] = "主目錄"
 
-# --- 側邊欄：登入與權限 ---
+# --- 側邊欄：登入 ---
 with st.sidebar:
     st.title("🔐 會員登入")
     if not st.session_state['logged_in']:
@@ -37,7 +37,18 @@ with m_col:
     st.markdown("<h1 style='text-align: center; color: #1E88E5;'>📈 股票心法 VIP 系統</h1>", unsafe_allow_html=True)
     st.write("---")
 
-    menu = ["一. 趨勢線與盤整切換", "二. 箱型波段預測", "七. 資金分配法", "九. 緊急提醒"]
+    # 恢復完整目錄
+    menu = [
+        "一. 畫趨勢線確認位置", 
+        "二. 畫箱型 + 波段 + 壓力支撐線", 
+        "三. 用箱形突破找加碼點跟出場點", 
+        "四. 均線做法", 
+        "五. 懶人高勝法", 
+        "六. 單純找裸K選股", 
+        "七. 資金分配法", 
+        "八. 精準支撐壓力", 
+        "九. 緊急下跌狀況注意提醒"
+    ]
     
     for i, item in enumerate(menu):
         if st.button(item, key=f"menu_{i}", use_container_width=True):
@@ -50,55 +61,40 @@ with m_col:
     
     if curr != "主目錄":
         if st.session_state['logged_in']:
-            st.subheader(f"📍 當前模組：{curr}")
+            st.subheader(f"📍 當前位置：{curr}")
             
-            # --- 心法一：趨勢線與盤整切換 ---
-            if "趨勢線" in curr:
-                st.markdown("### 📐 形態診斷：階梯式趨勢切換")
-                st.info("心法：趨勢線走完斜的盤整後，會切換成橫的盤整，再做一次斜的。")
-                
+            # 實作：趨勢線診斷 (心法一)
+            if "一." in curr:
+                st.markdown("### 📐 趨勢與盤整形態診斷")
+                st.info("心法：趨勢線走完斜的盤整後，會切換成橫的盤整，再做一次斜的。通常不會跌破 1小時 20MA。")
                 state = st.radio("當前形態觀察：", ["斜的盤整 (趨勢通道)", "橫的盤整 (箱型)"])
-                
-                if state == "斜的盤整 (趨勢通道)":
-                    st.success("🔎 **診斷：趨勢延伸中**。接下來預期會進入橫盤。")
-                else:
-                    st.warning("🔎 **診斷：進入橫盤蓄勢**。接下來預期將再次啟動斜盤。")
-                
-                st.divider()
-                st.markdown("#### 🛡️ 慣性守備指標")
                 ma_check = st.toggle("K棒是否守住 1小時 20MA？")
                 if ma_check:
-                    st.success("✅ **維持原盤整波段**：多頭慣性未改變。")
+                    st.success("✅ 多頭慣性維持。")
                 else:
-                    st.error("❌ **慣性改變警告**：跌破 1H 20MA，注意型態反轉！")
+                    st.error("❌ 慣性改變警告！")
 
-            # --- 心法二：箱型波段預測 ---
-            elif "箱型" in curr:
-                st.markdown("### 🎯 專業箱型目標預測")
+            # 實作：箱型預測 (心法二、三)
+            elif "二." in curr or "三." in curr:
+                st.markdown("### 🎯 專業箱型目標價預測")
                 c1, c2 = st.columns(2)
-                hp = c1.number_input("最高點 (100)", value=100.0)
-                lp = c2.number_input("最低點 (80)", value=80.0)
+                hp = c1.number_input("壓力位 (箱頂)", value=100.0)
+                lp = c2.number_input("支撐位 (箱底)", value=80.0)
                 box_h = hp - lp
-                mid_p = lp + (box_h / 2)
-                
-                res1, res2, res3 = st.columns(3)
-                res1.metric("箱型高度", f"{box_h:.2f}")
-                res2.metric("🛡️ 中軸守備", f"{mid_p:.2f}")
-                res3.metric("🚀 第二波目標", f"{hp + box_h:.2f}")
-                st.success(f"💡 建議進場位：{mid_p} 以下，波動小且勝率高。")
+                st.metric("🛡️ 中軸守備線", f"{lp + (box_h / 2):.2f}")
+                st.metric("🚀 突破目標價", f"{hp + box_h:.2f}")
 
-            # --- 心法七：資金分配法 ---
-            elif "資金" in curr:
-                st.markdown("### 💰 6-3-1 專業資產配置")
-                total = st.number_input("請輸入總資產 (萬元)", value=100.0, step=10.0)
-                st.write(f"📊 **60% 高股息 ETF:** {total*0.6:.1f} 萬")
-                st.write(f"📊 **30% 波動型 ETF:** {total*0.3:.1f} 萬")
-                st.write(f"📊 **10% 短線個股:** {total*0.1:.1f} 萬")
+            # 實作：資金分配 (心法七)
+            elif "七." in curr:
+                total = st.number_input("總資產 (萬元)", value=100.0)
+                st.write(f"📊 60% 高股息: {total*0.6:.1f} 萬")
+                st.write(f"📊 30% 波動型: {total*0.3:.1f} 萬")
+                st.write(f"📊 10% 短線個股: {total*0.1:.1f} 萬")
             
             else:
-                st.info("內容建置中...")
+                st.info(f"「{curr}」的心法內容數位化建置中...")
         else:
-            st.warning("🔒 此為 VIP 會員專屬內容，請先從左側登入 (1234)。")
+            st.warning("🔒 此為 VIP 專屬內容，請先登入 (1234)。")
 
     st.write("---")
     st.caption("© 2026 股票心法 VIP | 核心開發：比爾蓋茲")
