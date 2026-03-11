@@ -16,7 +16,7 @@ with st.sidebar:
         u_id = st.text_input("帳號", placeholder="admin")
         u_pw = st.text_input("密碼", type="password", placeholder="888888")
         if st.button("確認進入系統", use_container_width=True):
-            if u_id == "admin" and u_pw == "888888":
+           if u_id == "1234" and u_pw == "1234":
                 st.session_state['logged_in'] = True
                 st.rerun()
             else:
@@ -105,3 +105,4 @@ with main_col:
 
     st.write("---")
     st.caption("© 2026 股票心法 VIP | 紀律是唯一通往財富的道路")
+
